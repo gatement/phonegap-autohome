@@ -101,6 +101,9 @@
     <feature name="InAppBrowser">
       <param name="android-package" value="org.apache.cordova.InAppBrowser"/>
     </feature>
+    <feature name="WebSocket">
+      <param name="android-package" value="com.phonegap.plugins.websocket.WebSocket"/>
+    </feature>
     <!-- Deprecated plugins element. Remove in 3.0 -->
     <plugins>
     </plugins>
