@@ -1,10 +1,10 @@
-Ext.define('Autohome.controller.home.Windows', {
+Ext.define('Autohome.controller.Windows', {
 	extend: 'Ext.app.Controller',
 
 	config: {
 		refs: {
-			poweroffBtn: 'card_home_windows #poweroff',
-			rebootBtn: 'card_home_windows #reboot'
+			poweroffBtn: 'card_windows #poweroff',
+			rebootBtn: 'card_windows #reboot'
 		},
 		control: {
 			poweroffBtn: {

@@ -4,28 +4,46 @@ if(typeof(settings) === 'undefined') {
 settings.sessionVal = null;
 settings.MyWebSocket = null;
 settings.myWebSocket = null;
-settings.GetUserSessionUrl = 'https://tools.johnson.uicp.net:88/user/session/jsonp';
+
 settings.WebSocketUrl = "wss://tools.johnson.uicp.net:88/device/socket";
+
+var baseUrl = 'https://tools.johnson.uicp.net:88';
+
+settings.JsonpUrls = {};
+settings.JsonpUrls['get_user_session'] = baseUrl + '/user/session/jsonp';
+settings.JsonpUrls['list_devices'] = baseUrl + '/device/device/list/jsonp';
+settings.JsonpUrls['update_switch_status'] = baseUrl + '/device/switch/update/jsonp';
+settings.JsonpUrls['send_command'] = baseUrl + '/device/command/send/jsonp';
 
 function app_start() {
 	Ext.application({
 		name: "Autohome",
 
 		requires: [
-			'Autohome.view.Login',
-			'Autohome.view.Main'
+		'Autohome.view.Login',
+		'Autohome.view.Main',
+		'Autohome.view.Arduino',
+		'Autohome.view.Windows',
+		'Autohome.view.Linux',
+		'Autohome.view.Settings'
 		],
 
 		views: [
-			'Main',
-			'Login'
+		'Login',
+		'Main',
+		'Arduino',
+		'Windows',
+		'Linux',
+		'Settings'
 		],
 
 		controllers: [
-			'Login',
-			'home.Arduino', 
-			'home.Windows', 
-			'home.Linux'
+		'Login',
+		'Main',
+		'Arduino', 
+		'Windows', 
+		'Linux',
+		'Settings'
 		],
 
 		launch: function() {
@@ -36,4 +54,3 @@ function app_start() {
 	});
 }
 
-app_start();

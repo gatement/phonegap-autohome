@@ -1,22 +1,22 @@
-Ext.define('Autohome.view.home.Linux', {
+Ext.define('Autohome.view.Windows', {
 	extend: 'Ext.Container',
-	xtype: 'card_home_linux',
+	xtype: 'card_windows',
 
 	config: {
-		title: 'Linux',
-		scrollable: 'vertical',
+		title: 'WINDOWS',
+		iconCls: 'favorites',
+		scrollable: false,
 		layout: {
 			type: 'vbox',
 			align: 'middle'
 		},
-		defaults: { 
-			styleHtmlContent: true
-	   	},
 		items: [
-			{ 
-				xtype: 'titlebar',
-				docked: 'top',
-				ui: 'light'
+			{
+				itemId: "loading",
+				xtype: "container",
+				hidden: true,
+				padding: 10,
+				html: "<h2>loading...</h2>"
 			},
 			{
 				itemId: "offline",

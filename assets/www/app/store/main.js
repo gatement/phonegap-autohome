@@ -8,27 +8,31 @@ var main = {
 			xclass: 'Autohome.view.Main' 
 		});
 		
-		main.socket_init();
-		main.socket_connect();
+		if(localStorage.conn_type == undefined || localStorage.conn_type == 'jsonp')
+		{
+			main.list_devices();
+		}
+		else
+		{
+			main.socket_init();
+			main.socket_connect();
+		}
 	},
 
 	//============ helpers ======================================================================
 	update_arduino: function(data, animation)
 	{
-		titlebar = Ext.ComponentQuery.query('card_home_arduino titlebar')[0];
-		offlineContainer = Ext.ComponentQuery.query('card_home_arduino #offline')[0];
-		onlineContainer = Ext.ComponentQuery.query('card_home_arduino #online')[0];
-
-		titlebar.setTitle(data.name);
+		var offlineContainer = Ext.ComponentQuery.query('card_arduino #offline')[0];
+		var onlineContainer = Ext.ComponentQuery.query('card_arduino #online')[0];
 
 		if(data.online)
 		{
 			offlineContainer.hide(animation);
 			onlineContainer.show(animation);
 
-			windowspcBtn = Ext.ComponentQuery.query('card_home_arduino #windowspc')[0];
-			switch2Btn = Ext.ComponentQuery.query('card_home_arduino #switch2')[0];
-			switch3Btn = Ext.ComponentQuery.query('card_home_arduino #switch3')[0];
+			windowspcBtn = Ext.ComponentQuery.query('card_arduino #windowspc')[0];
+			switch2Btn = Ext.ComponentQuery.query('card_arduino #switch2')[0];
+			switch3Btn = Ext.ComponentQuery.query('card_arduino #switch3')[0];
 			
 			if(data.values.switch1 === 'on')
 			{
@@ -66,11 +70,8 @@ var main = {
 
 	update_windows: function(data, animation)
 	{
-		titlebar = Ext.ComponentQuery.query('card_home_windows titlebar')[0];
-		offlineContainer = Ext.ComponentQuery.query('card_home_windows #offline')[0];
-		onlineContainer = Ext.ComponentQuery.query('card_home_windows #online')[0];
-
-		titlebar.setTitle(data.name);
+		var offlineContainer = Ext.ComponentQuery.query('card_windows #offline')[0];
+		var onlineContainer = Ext.ComponentQuery.query('card_windows #online')[0];
 
 		if(data.online)
 		{
@@ -86,11 +87,8 @@ var main = {
 
 	update_linux: function(data, animation)
 	{
-		titlebar = Ext.ComponentQuery.query('card_home_linux titlebar')[0];
-		offlineContainer = Ext.ComponentQuery.query('card_home_linux #offline')[0];
-		onlineContainer = Ext.ComponentQuery.query('card_home_linux #online')[0];
-
-		titlebar.setTitle(data.name);
+		var offlineContainer = Ext.ComponentQuery.query('card_linux #offline')[0];
+		var onlineContainer = Ext.ComponentQuery.query('card_linux #online')[0];
 
 		if(data.online)
 		{
@@ -122,7 +120,19 @@ var main = {
 		}
 	},
 
-	//============ web socket operations ===========================================================
+	send_msg: function(msgObj)
+	{
+		if(localStorage.conn_type == undefined || localStorage.conn_type == 'jsonp')
+		{
+			main.jsonp_send_msg(msgObj);
+		}
+		else
+		{
+			main.socket_send_msg(msgObj);
+		}
+	},
+
+	//============ operations ===========================================================
 	update_socket: function() 
 	{
 		var msg = {
@@ -144,16 +154,32 @@ var main = {
 
 	list_devices: function()
 	{
+		Ext.ComponentQuery.query('card_arduino #loading')[0].show();
+		Ext.ComponentQuery.query('card_arduino #online')[0].hide();
+		Ext.ComponentQuery.query('card_arduino #offline')[0].hide();
+		
+		Ext.ComponentQuery.query('card_windows #loading')[0].show();
+		Ext.ComponentQuery.query('card_windows #online')[0].hide();
+		Ext.ComponentQuery.query('card_windows #offline')[0].hide();
+
+		Ext.ComponentQuery.query('card_linux #loading')[0].show();
+		Ext.ComponentQuery.query('card_linux #online')[0].hide();
+		Ext.ComponentQuery.query('card_linux #offline')[0].hide();
+
 		var msg = {
 			cmd: "list_devices",
 			sid: settings.sessionVal,
 			data: ""
 		};
-		this.socket_send_msg(msg);
+		this.send_msg(msg);
 	},
 
 	list_devices_success: function(data) 
 	{
+		Ext.ComponentQuery.query('card_arduino #loading')[0].hide();
+		Ext.ComponentQuery.query('card_windows #loading')[0].hide();
+		Ext.ComponentQuery.query('card_linux #loading')[0].hide();
+
 		for(var i=0; i< data.length; i++)
 		{
 			switch(data[i].type)
@@ -169,10 +195,6 @@ var main = {
 					break;
 			}
 		};
-
-		Ext.ComponentQuery.query('card_home')[0].show();
-		Ext.ComponentQuery.query('card_main').removeAt(0);
-		Ext.ComponentQuery.query('card_loading')[0].destroy();
 	},
 
 	list_devices_error: function(data) 
@@ -188,7 +210,7 @@ var main = {
 			sid: settings.sessionVal,
 			data: {"device_id": deviceId, "switch_id": switchId, "status": status}
 		};
-		main.socket_send_msg(msg);
+		main.send_msg(msg);
 	},
 
 	update_switch_status_success: function(data) 
@@ -208,7 +230,7 @@ var main = {
 			sid: settings.sessionVal,
 			data: {"device_id": deviceId, "cmd": cmd}
 		};
-		main.socket_send_msg(msg);
+		main.send_msg(msg);
 	},
 
 	send_command_success: function(data) 
@@ -235,6 +257,42 @@ var main = {
 				break;
 		}
 	},
+	
+	//============ jsonp ===========================================================================
+	jsonp_send_msg: function(msgObj)
+	{
+		var data = window.JSON.stringify(msgObj.data);
+		var url = settings.JsonpUrls[msgObj.cmd];
+
+		Ext.data.JsonP.request({
+			url: url,
+			callbackKey: 'callback',
+			disableCaching: true,
+			params: {
+				sid: msgObj.sid,
+				data: data
+			},
+			success: function(response, request) {
+				if(response.success)
+				{
+					main[msgObj.cmd + "_success"].apply(this, [response.data]);
+				}
+				else
+				{
+					main[msgObj.cmd + "_error"].apply(this, [response.data]);
+				}
+			},
+			failure: function() {
+				Ext.Msg.alert('operation failed.');
+			}
+		});
+
+		// log
+		if(console && console.log)
+		{
+			console.log("sending: %o", msgObj);
+		}
+	},
 
 	//============ web socket ======================================================================
 	socket_init: function()
@@ -243,7 +301,7 @@ var main = {
 		if (!settings.MyWebSocket && window.MozWebSocket) settings.MyWebSocket = window.MozWebSocket;
 		if (!settings.MyWebSocket)
 		{
-			Ext.Msg.alert("Your browser is not supported. Please use Firefox or Google Chrome.");
+			Ext.Msg.alert("Your browser is not supported websocket. Firefox or Chrome is recommended.");
 		}
 	},
 
@@ -285,7 +343,7 @@ var main = {
 			{
 				console.log("Socket is closed, is reconnecting...");
 			}
-			window.setTimeout(function(){socket_connect();}, 6000);
+			window.setTimeout(function(){main.socket_connect();}, 6000);
 		};
 		
 		settings.myWebSocket = new settings.MyWebSocket(settings.WebSocketUrl);
@@ -303,7 +361,7 @@ var main = {
 			
 			if(sendResult === false)
 			{
-				window.setTimeout(function(){socket_send_msg(msgObj);}, 5000);
+				window.setTimeout(function(){main.socket_send_msg(msgObj);}, 5000);
 				if(console && console.log)
 				{
 					console.log("Communication error, is retrying...");
@@ -316,7 +374,7 @@ var main = {
 			{
 				console.log("Communication error, is retrying...");
 			}
-			window.setTimeout(function(){socket_send_msg(msgObj);}, 5000);
+			window.setTimeout(function(){main.socket_send_msg(msgObj);}, 5000);
 		}
 
 		// log

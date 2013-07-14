@@ -1,11 +1,11 @@
-Ext.define('Autohome.controller.home.Arduino', {
+Ext.define('Autohome.controller.Arduino', {
 	extend: 'Ext.app.Controller',
 
 	config: {
 		refs: {
-			windowspcBtn: 'card_home_arduino #windowspc',
-			switch2Btn: 'card_home_arduino #switch2',
-			switch3Btn: 'card_home_arduino #switch3'
+			windowspcBtn: 'card_arduino #windowspc',
+			switch2Btn: 'card_arduino #switch2',
+			switch3Btn: 'card_arduino #switch3'
 		},
 		control: {
 			windowspcBtn: {

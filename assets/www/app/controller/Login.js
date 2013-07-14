@@ -5,6 +5,8 @@ Ext.define('Autohome.controller.Login', {
 		refs: {
 			loginBtn: 'card_login #login',
 			loginForm: 'card_login',
+			remNameCheck: 'card_login #rem_name',
+			remPwdCheck: 'card_login #rem_pwd'
 		},
 		control: {
 			loginBtn: {
@@ -15,6 +17,8 @@ Ext.define('Autohome.controller.Login', {
 
 	login: function()
 	{
+		var me = this;
+
 		var values = this.getLoginForm().getValues();
 		if(values.username == '' || values.password == '')
 		{
@@ -23,22 +27,48 @@ Ext.define('Autohome.controller.Login', {
 		else
 		{
 			Ext.data.JsonP.request({
-				url: settings.GetUserSessionUrl,
+				url: settings.JsonpUrls['get_user_session'],
 				callbackKey: 'callback',
 				disableCaching: true,
 				params: {
 					id: values.username,
 					pwd: values.password
 				},
-				success: function(result, request) {
-					if(result.success)
+				success: function(response, request) {
+					if(response.success)
 					{
-						main.login_success(result.data);
+						if(typeof(Storage) == 'undefined')
+						{
+							Ext.Msg.alert('Your browser is not supported saving the credentials. Firefox or Chrome is recommended.');
+						}
+						else
+						{
+							if(me.getRemNameCheck().isChecked())
+							{
+								window.localStorage.login_name = values.username;
+							}
+							else
+							{
+								window.localStorage.removeItem('login_name');
+							}
+							if(me.getRemPwdCheck().isChecked())
+							{
+								window.localStorage.login_pwd = values.password;
+							}
+							else
+							{
+								window.localStorage.removeItem('login_pwd');
+							}
+						}
+						main.login_success(response.data);
 					}
 					else
 					{
 						Ext.Msg.alert('wrong name and password.');
 					}
+				},
+				failure: function() {
+					Ext.Msg.alert('authenticate user failed.');
 				}
 			});
 		}

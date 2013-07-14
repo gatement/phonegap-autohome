@@ -1,10 +1,10 @@
-Ext.define('Autohome.controller.home.Linux', {
+Ext.define('Autohome.controller.Linux', {
 	extend: 'Ext.app.Controller',
 
 	config: {
 		refs: {
-			poweroffBtn: 'card_home_linux #poweroff',
-			rebootBtn: 'card_home_linux #reboot'
+			poweroffBtn: 'card_linux #poweroff',
+			rebootBtn: 'card_linux #reboot'
 		},
 		control: {
 			poweroffBtn: {

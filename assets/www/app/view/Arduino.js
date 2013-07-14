@@ -1,22 +1,22 @@
-Ext.define('Autohome.view.home.Windows', {
+Ext.define('Autohome.view.Arduino', {
 	extend: 'Ext.Container',
-	xtype: 'card_home_windows',
+	xtype: 'card_arduino',
 
 	config: {
-		title: 'Windows',
-		scrollable: 'vertical',
+		title: 'ARDUINO',
+		iconCls: 'home',
+		scrollable: false,
 		layout: {
 			type: 'vbox',
 			align: 'middle'
 		},
-		defaults: { 
-			styleHtmlContent: true
-	   	},
 		items: [
-			{ 
-				xtype: 'titlebar',
-				docked: 'top',
-				ui: 'light'
+			{
+				itemId: "loading",
+				xtype: "container",
+				hidden: true,
+				padding: 10,
+				html: "<h2>loading...</h2>"
 			},
 			{
 				itemId: "offline",
@@ -40,12 +40,16 @@ Ext.define('Autohome.view.home.Windows', {
 				},
 				items: [
 					{
-						itemId: 'poweroff',
-						text: 'poweroff'
+						itemId: 'windowspc',
+						text: 'window pc'
 					},
 					{ 
-						itemId: 'reboot',
-						text: 'reboot'
+						itemId: 'switch2',
+						text: 'switch2'
+					},
+					{ 
+						itemId: 'switch3',
+						text: 'switch3'
 					}
 				]
 			}
