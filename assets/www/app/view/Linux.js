@@ -46,6 +46,11 @@ Ext.define('Autohome.view.Linux', {
 					{ 
 						itemId: 'reboot',
 						text: 'reboot'
+					},
+					{
+						itemId: 'uptime',
+						xtype: 'label',
+						html: ''
 					}
 				]
 			}

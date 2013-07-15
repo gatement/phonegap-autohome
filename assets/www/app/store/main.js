@@ -77,6 +77,9 @@ var main = {
 		{
 			offlineContainer.hide(animation);
 			onlineContainer.show(animation);
+
+			var uptimeLabel = Ext.ComponentQuery.query('card_windows #uptime')[0];
+			uptimeLabel.setHtml('Uptime: ' + data.values.uptime + ' minutes');
 		}
 		else
 		{
@@ -94,6 +97,9 @@ var main = {
 		{
 			offlineContainer.hide(animation);
 			onlineContainer.show(animation);
+
+			var uptimeLabel = Ext.ComponentQuery.query('card_linux #uptime')[0];
+			uptimeLabel.setHtml('Uptime: ' + data.values.uptime + ' minutes');
 		}
 		else
 		{
