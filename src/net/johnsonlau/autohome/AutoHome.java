@@ -20,6 +20,7 @@
 package net.johnsonlau.autohome;
 
 import android.os.Bundle;
+import android.content.Intent;
 import org.apache.cordova.*;
 
 public class AutoHome extends DroidGap
@@ -32,5 +33,24 @@ public class AutoHome extends DroidGap
         super.loadUrl(Config.getStartUrl());
         //super.loadUrl("file:///android_asset/www/index.html")
     }
+
+	@Override
+    protected void onResume() {
+        super.onResume();
+        
+        showReceivedMessage();
+        
+        startService(new Intent(this, ServiceMessage.class));
+    }
+
+	private void showReceivedMessage() {
+		Bundle extras = getIntent().getExtras();
+		String message = extras != null ? extras.getString("Message") : null;
+		
+		if (message != null) {
+			//message = "Recieved: " + message;
+			//mMsgTextView.setText(message);
+		}
+	}
 }
 
