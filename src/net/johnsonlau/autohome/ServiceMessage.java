@@ -56,6 +56,21 @@ public class ServiceMessage extends Service {
 		}
 	}
 
+	private void startMqttClient() {
+		String clientId = getLocalMacAddress();
+		showNotification("Client id: " + clientId);
+
+		boolean cleanstart = true;
+		short keepalive = 3600;
+
+		try{
+			MyMqttClient mqttClient = new MyMqttClient(mMqttConnectionString);
+			mqttClient.connect(clientId, cleanstart, keepalive);
+		} catch (MqttException e) {
+			Log.i(ServiceMessage.TAG, e.getMessage());
+		}
+	}
+
 	private class MyMqttClient extends MqttClient {
 		MyMqttClient(String theConnection) throws MqttException {
 			super(theConnection);
@@ -91,21 +106,6 @@ public class ServiceMessage extends Service {
 			{
 				showNotification(thisTopicName);
 			}
-		}
-	}
-
-	private void startMqttClient() {
-		String clientId = getLocalMacAddress();
-		showNotification("Client id: " + clientId);
-
-		boolean cleanstart = true;
-		short keepalive = 3600;
-
-		try{
-			MyMqttClient mqttClient = new MyMqttClient(mMqttConnectionString);
-			mqttClient.connect(clientId, cleanstart, keepalive);
-		} catch (MqttException e) {
-			Log.i(ServiceMessage.TAG, e.getMessage());
 		}
 	}
 
