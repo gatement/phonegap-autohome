@@ -40,7 +40,9 @@ public class AutoHome extends DroidGap
         
         showReceivedMessage();
         
-        startService(new Intent(this, NotificationService.class));
+		if(Utils.IsNetworkAvailable(this)) {
+			this.startService(new Intent("init", null, this, NotificationService.class));
+		}
     }
 
 	private void showReceivedMessage() {

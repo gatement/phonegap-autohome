@@ -1,5 +1,7 @@
 package net.johnsonlau.autohome;
 
+import java.lang.Thread;
+import java.lang.InterruptedException;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -12,65 +14,106 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.ibm.mqtt.MqttClient;
 import com.ibm.mqtt.MqttException;
 import com.ibm.mqtt.MqttSimpleCallback;
 
 public class NotificationService extends Service {
-	private static final String TAG = "AutoHome_NotificationService";
+	private static final String TAG = "AutoHome";
 
-	private String mMqttConnectionString = "tcp://tools.johnson.uicp.net:1883";
-	
 	private MessageThread mMessageThread = null;
 
-	private NotificationManager mNotificatioManager = null;
+	private NotificationManager mNotificationManager = null;
 	private Notification mNotification = null;
 	private int mNotificationIcon = R.drawable.notification_icon;
-	private int mNotificationID = 0;
+	private int mNotificationId = 0;
+
+	public boolean mMqttConnected = false;
+	public MqttClient mMqttClient = null;
+	public String mMqttClientId = null;
+	final public String mMqttConnectionString = "tcp://tools.johnson.uicp.net:1883";
+	final public boolean mMqttCleanStart = true;
+	final public short mMqttKeepalive = 1200;
+
+	private Timer mTimer = null;
+	private TimerTask mTimerTask;
 
 	// =============================================================
 	// @Override
 	// =============================================================
+	
+	@Override
+	public void onCreate() {
+		// init notifacation
+		mNotification = new Notification();
+		mNotification.icon = mNotificationIcon;
+		mNotification.defaults = Notification.DEFAULT_ALL;
+		mNotification.flags = Notification.FLAG_AUTO_CANCEL;
+		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+		// init mqtt clientId
+		mMqttClientId = getLocalMacAddress();
+
+		// init mqtt client
+		try{
+			mMqttClient = new MqttClient(mMqttConnectionString);
+			mMqttClient.registerSimpleHandler(new MyMqttSimpleCallback());
+			Log.i(NotificationService.TAG, "inited mqtt client");
+		} catch (MqttException e) {
+			Log.i(NotificationService.TAG, "init mqtt client EXCEPTION");
+		}
+
+		// start thread
+		mMessageThread = new MessageThread();
+		mMessageThread.start();
+	}
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (mMessageThread == null) {
-			mNotification = new Notification();
-			mNotification.icon = mNotificationIcon;
-			mNotification.defaults = Notification.DEFAULT_SOUND;
-			mNotification.flags = Notification.FLAG_AUTO_CANCEL;
-			mNotificatioManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-			mMessageThread = new MessageThread();
-			mMessageThread.start();
+		if(intent != null)
+		{
+			if(intent.getAction().equals("init")){
+				//showNotification("Client id: " + mMqttClientId);
+			}
+			else if (intent.getAction().equals("exit")){
+				this.stopSelf();
+				Log.i(NotificationService.TAG, "NotificationService exit");
+			}
 		}
+
 		return START_STICKY;
 	}
 
 	@Override
 	public void onDestroy() {
-		System.exit(0);
-		super.onDestroy();
+		stopTimer();
 	}
 
 	@Override
 	public IBinder onBind(Intent intent) {
 		return null;
 	}
-
+	
 	// =============================================================
 	// Class & Interface
 	// =============================================================
+
 	private class MessageThread extends Thread {
 		public void run() {
-			startMqttClient();
+			startTimer();
 		}
 	}
 
 	private class MyMqttSimpleCallback implements MqttSimpleCallback {
 		@Override
-		public void connectionLost() {
-
+		public void connectionLost() throws java.lang.Exception {
+			Log.i(NotificationService.TAG, "mqtt conn lost");
+			mMqttConnected = false;
+			startTimer();
+			throw new Exception("mqtt conn lost");
 		}
 
 		@Override
@@ -80,6 +123,7 @@ public class NotificationService extends Service {
 				boolean retained) 
 				throws java.lang.Exception
 		{
+			Log.i(NotificationService.TAG, thisTopicName);
 			String[] items = thisTopicName.split("/");
 
 			if(items.length == 3 && (items[2].equals("online") || items[2].equals("offline"))){
@@ -106,25 +150,40 @@ public class NotificationService extends Service {
 			}
 		}
 	}	
+
+	private class MyTimerTask extends TimerTask {
+		@Override
+		public void run() {
+			connectMqttBroker();
+		}
+	}
 	
 	// =============================================================
 	// Helpers
 	// =============================================================
 
-	private void startMqttClient() {
-		String clientId = getLocalMacAddress();
-		showNotification("Client id: " + clientId);
-
-		boolean cleanstart = true;
-		short keepalive = 3600;
-
-		try{
-			MqttClient mqttClient = new MqttClient(mMqttConnectionString);
-			mqttClient.registerSimpleHandler(new MyMqttSimpleCallback());
-			mqttClient.connect(clientId, cleanstart, keepalive);
-		} catch (MqttException e) {
-			Log.i(NotificationService.TAG, e.getMessage());
+	private boolean connectMqttBroker() {
+		boolean result = false;
+		if(mMqttConnected == false) {
+			Log.i(NotificationService.TAG, "try connecting mqtt broker");
+			try {
+				if(Utils.IsNetworkAvailable(this)) {
+					mMqttClient.connect(mMqttClientId, mMqttCleanStart, mMqttKeepalive);
+					mMqttConnected = true;
+					stopTimer();
+					result = true;
+					Log.i(NotificationService.TAG, "mqtt is connected");
+				}
+				else {
+					Log.i(NotificationService.TAG, "network is NOT available");
+				}
+			} catch (MqttException e) {
+				mMqttConnected = false;
+				Log.i(NotificationService.TAG, "connect mqtt broker EXCEPTION");
+			}
 		}
+
+		return result;
 	}
 
 	private void showNotification(String msg) {
@@ -137,8 +196,7 @@ public class NotificationService extends Service {
 				PendingIntent pendingIntent = buildPendingIntent(msg);
 				mNotification.tickerText = msg;
 				mNotification.setLatestEventInfo(NotificationService.this, title, msg, pendingIntent);
-				mNotificatioManager.notify(mNotificationID++, mNotification);
-				((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(1000);
+				mNotificationManager.notify(mNotificationId++, mNotification);
 			}
 		} catch (Exception e) {
 			Log.i(NotificationService.TAG, e.getMessage());
@@ -160,4 +218,23 @@ public class NotificationService extends Service {
 		WifiInfo info = wifi.getConnectionInfo();  
 		return info.getMacAddress().replace(":", "");  
 	} 
+
+	private void stopTimer() {
+		if(mTimer != null) {
+			Log.i(NotificationService.TAG, "stop timer");
+			mTimer.cancel();
+			mTimer.purge();
+		}
+	}
+
+	private void startTimer() {
+		stopTimer();
+
+		mTimer = new Timer(true);
+
+		Log.i(NotificationService.TAG, "start timer");
+		long delay = 5000;
+		long period = 60000;
+		mTimer.schedule(new MyTimerTask(), delay, period);
+	}
 }
