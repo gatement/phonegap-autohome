@@ -10,7 +10,7 @@ public class BootBroadcastReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if (intent.getAction().equals(ACTION)) {
-			context.startService(new Intent(context, ServiceMessage.class));
+			context.startService(new Intent(context, NotificationService.class));
 		}
 	}
 }

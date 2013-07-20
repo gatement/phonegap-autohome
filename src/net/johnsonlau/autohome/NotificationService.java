@@ -15,26 +15,23 @@ import android.net.wifi.WifiManager;
 
 import com.ibm.mqtt.MqttClient;
 import com.ibm.mqtt.MqttException;
+import com.ibm.mqtt.MqttSimpleCallback;
 
-public class ServiceMessage extends Service {
-	private static final String TAG = "AutoHome_ServiceMessage";
+public class NotificationService extends Service {
+	private static final String TAG = "AutoHome_NotificationService";
 
 	private String mMqttConnectionString = "tcp://tools.johnson.uicp.net:1883";
 	
-	private static final String MqttServer = "tools.johnson.uicp.net";
-	private static final int MqttPort = 1883;
-	
-	private String mUserId = "admin";
-	private String mPassword = "admin";
-
 	private MessageThread mMessageThread = null;
 
+	private NotificationManager mNotificatioManager = null;
+	private Notification mNotification = null;
 	private int mNotificationIcon = R.drawable.notification_icon;
 	private int mNotificationID = 0;
 
-	private Notification mNotification = null;
-	private NotificationManager mNotificatioManager = null;
-
+	// =============================================================
+	// @Override
+	// =============================================================
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		if (mMessageThread == null) {
@@ -50,37 +47,38 @@ public class ServiceMessage extends Service {
 		return START_STICKY;
 	}
 
+	@Override
+	public void onDestroy() {
+		System.exit(0);
+		super.onDestroy();
+	}
+
+	@Override
+	public IBinder onBind(Intent intent) {
+		return null;
+	}
+
+	// =============================================================
+	// Class & Interface
+	// =============================================================
 	private class MessageThread extends Thread {
 		public void run() {
 			startMqttClient();
 		}
 	}
 
-	private void startMqttClient() {
-		String clientId = getLocalMacAddress();
-		showNotification("Client id: " + clientId);
+	private class MyMqttSimpleCallback implements MqttSimpleCallback {
+		@Override
+		public void connectionLost() {
 
-		boolean cleanstart = true;
-		short keepalive = 3600;
-
-		try{
-			MyMqttClient mqttClient = new MyMqttClient(mMqttConnectionString);
-			mqttClient.connect(clientId, cleanstart, keepalive);
-		} catch (MqttException e) {
-			Log.i(ServiceMessage.TAG, e.getMessage());
-		}
-	}
-
-	private class MyMqttClient extends MqttClient {
-		MyMqttClient(String theConnection) throws MqttException {
-			super(theConnection);
 		}
 
 		@Override
-		protected void publishArrived(String thisTopicName,
-				byte[] thisPayload,
-				int QoS,
-				boolean retained) throws java.lang.Exception
+		public void publishArrived(String thisTopicName, 
+				byte[] thisPayload, 
+				int Qos, 
+				boolean retained) 
+				throws java.lang.Exception
 		{
 			String[] items = thisTopicName.split("/");
 
@@ -107,6 +105,26 @@ public class ServiceMessage extends Service {
 				showNotification(thisTopicName);
 			}
 		}
+	}	
+	
+	// =============================================================
+	// Helpers
+	// =============================================================
+
+	private void startMqttClient() {
+		String clientId = getLocalMacAddress();
+		showNotification("Client id: " + clientId);
+
+		boolean cleanstart = true;
+		short keepalive = 3600;
+
+		try{
+			MqttClient mqttClient = new MqttClient(mMqttConnectionString);
+			mqttClient.registerSimpleHandler(new MyMqttSimpleCallback());
+			mqttClient.connect(clientId, cleanstart, keepalive);
+		} catch (MqttException e) {
+			Log.i(NotificationService.TAG, e.getMessage());
+		}
 	}
 
 	private void showNotification(String msg) {
@@ -118,12 +136,12 @@ public class ServiceMessage extends Service {
 			if (msg != null && !"".equals(msg)) {
 				PendingIntent pendingIntent = buildPendingIntent(msg);
 				mNotification.tickerText = msg;
-				mNotification.setLatestEventInfo(ServiceMessage.this, title, msg, pendingIntent);
+				mNotification.setLatestEventInfo(NotificationService.this, title, msg, pendingIntent);
 				mNotificatioManager.notify(mNotificationID++, mNotification);
 				((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(1000);
 			}
 		} catch (Exception e) {
-			Log.i(ServiceMessage.TAG, e.getMessage());
+			Log.i(NotificationService.TAG, e.getMessage());
 		}
 	}
 
@@ -142,15 +160,4 @@ public class ServiceMessage extends Service {
 		WifiInfo info = wifi.getConnectionInfo();  
 		return info.getMacAddress().replace(":", "");  
 	} 
-
-	@Override
-	public void onDestroy() {
-		System.exit(0);
-		super.onDestroy();
-	}
-
-	@Override
-	public IBinder onBind(Intent intent) {
-		return null;
-	}
 }

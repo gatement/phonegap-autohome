@@ -67,7 +67,7 @@
         </receiver>
 
         <service
-            android:name=".ServiceMessage"
+            android:name=".NotificationService"
             android:process=":message" />
     </application>
 
