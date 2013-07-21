@@ -19,6 +19,7 @@ import java.util.TimerTask;
 
 import com.ibm.mqtt.MqttClient;
 import com.ibm.mqtt.MqttException;
+import com.ibm.mqtt.MqttPersistenceException;
 import com.ibm.mqtt.MqttSimpleCallback;
 
 public class NotificationService extends Service {
@@ -90,6 +91,12 @@ public class NotificationService extends Service {
 	@Override
 	public void onDestroy() {
 		stopTimer();
+		if(mMqttConnected) {
+			try {
+				mMqttClient.disconnect();			
+			} catch (MqttPersistenceException ex) {
+			}
+		}
 	}
 
 	@Override
