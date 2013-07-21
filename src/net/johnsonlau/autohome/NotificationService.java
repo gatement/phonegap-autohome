@@ -37,7 +37,7 @@ public class NotificationService extends Service {
 	public String mMqttClientId = null;
 	final public String mMqttConnectionString = "tcp://tools.johnson.uicp.net:1883";
 	final public boolean mMqttCleanStart = true;
-	final public short mMqttKeepalive = 1200;
+	final public short mMqttKeepalive = 300;
 
 	private Timer mTimer = null;
 	private TimerTask mTimerTask;
@@ -241,7 +241,7 @@ public class NotificationService extends Service {
 
 		Log.i(NotificationService.TAG, "start timer");
 		long delay = 5000;
-		long period = 60000;
+		long period = 30000;
 		mTimer.schedule(new MyTimerTask(), delay, period);
 	}
 }
