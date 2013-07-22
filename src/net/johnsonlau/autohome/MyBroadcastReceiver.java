@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.ConnectivityManager;
-import android.util.Log;
 
 public class MyBroadcastReceiver extends BroadcastReceiver {
 	private static final String TAG = "AutoHome";
@@ -14,7 +13,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		Log.i(MyBroadcastReceiver.TAG, "broadcast: " + intent.getAction());
+		Utils.PrintLog("broadcast: " + intent.getAction());
 
 		if(intent.getAction().equals(MyBroadcastReceiver.BOOT_COMPLETED)){
 			if(Utils.IsNetworkAvailable(context)) {

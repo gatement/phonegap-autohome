@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.IBinder;
 import android.os.Vibrator;
-import android.util.Log;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import java.util.Timer;
@@ -62,9 +61,9 @@ public class NotificationService extends Service {
 		try{
 			mMqttClient = new MqttClient(mMqttConnectionString);
 			mMqttClient.registerSimpleHandler(new MyMqttSimpleCallback());
-			Log.i(NotificationService.TAG, "inited mqtt client");
+			Utils.PrintLog("inited mqtt client");
 		} catch (MqttException e) {
-			Log.i(NotificationService.TAG, "init mqtt client EXCEPTION");
+			Utils.PrintLog("init mqtt client EXCEPTION");
 		}
 
 		// start thread
@@ -81,7 +80,7 @@ public class NotificationService extends Service {
 			}
 			else if (intent.getAction().equals("exit")){
 				this.stopSelf();
-				Log.i(NotificationService.TAG, "NotificationService exit");
+				Utils.PrintLog("NotificationService exit");
 			}
 		}
 
@@ -117,7 +116,7 @@ public class NotificationService extends Service {
 	private class MyMqttSimpleCallback implements MqttSimpleCallback {
 		@Override
 		public void connectionLost() throws java.lang.Exception {
-			Log.i(NotificationService.TAG, "mqtt conn lost");
+			Utils.PrintLog("mqtt conn lost");
 			mMqttConnected = false;
 			startTimer();
 			throw new Exception("mqtt conn lost");
@@ -130,7 +129,7 @@ public class NotificationService extends Service {
 				boolean retained) 
 				throws java.lang.Exception
 		{
-			Log.i(NotificationService.TAG, thisTopicName);
+			Utils.PrintLog(thisTopicName);
 			String[] items = thisTopicName.split("/");
 
 			if(items.length == 3 && (items[2].equals("online") || items[2].equals("offline"))){
@@ -172,21 +171,21 @@ public class NotificationService extends Service {
 	private boolean connectMqttBroker() {
 		boolean result = false;
 		if(mMqttConnected == false) {
-			Log.i(NotificationService.TAG, "try connecting mqtt broker");
+			Utils.PrintLog("try connecting mqtt broker");
 			try {
 				if(Utils.IsNetworkAvailable(this)) {
 					mMqttClient.connect(mMqttClientId, mMqttCleanStart, mMqttKeepalive);
 					mMqttConnected = true;
 					stopTimer();
 					result = true;
-					Log.i(NotificationService.TAG, "mqtt is connected");
+					Utils.PrintLog("mqtt is connected");
 				}
 				else {
-					Log.i(NotificationService.TAG, "network is NOT available");
+					Utils.PrintLog("network is NOT available");
 				}
 			} catch (MqttException e) {
 				mMqttConnected = false;
-				Log.i(NotificationService.TAG, "connect mqtt broker EXCEPTION");
+				Utils.PrintLog("connect mqtt broker EXCEPTION");
 			}
 		}
 
@@ -206,7 +205,7 @@ public class NotificationService extends Service {
 				mNotificationManager.notify(mNotificationId++, mNotification);
 			}
 		} catch (Exception e) {
-			Log.i(NotificationService.TAG, e.getMessage());
+			Utils.PrintLog(e.getMessage());
 		}
 	}
 
@@ -228,7 +227,7 @@ public class NotificationService extends Service {
 
 	private void stopTimer() {
 		if(mTimer != null) {
-			Log.i(NotificationService.TAG, "stop timer");
+			Utils.PrintLog("stop timer");
 			mTimer.cancel();
 			mTimer.purge();
 		}
@@ -239,7 +238,7 @@ public class NotificationService extends Service {
 
 		mTimer = new Timer(true);
 
-		Log.i(NotificationService.TAG, "start timer");
+		Utils.PrintLog("start timer");
 		long delay = 5000;
 		long period = 30000;
 		mTimer.schedule(new MyTimerTask(), delay, period);
