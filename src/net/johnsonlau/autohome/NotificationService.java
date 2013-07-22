@@ -28,7 +28,7 @@ public class NotificationService extends Service {
 
 	private NotificationManager mNotificationManager = null;
 	private Notification mNotification = null;
-	private int mNotificationIcon = R.drawable.notification_icon;
+	private int mNotificationIcon = R.drawable.logo;
 	private int mNotificationId = 0;
 
 	public boolean mMqttConnected = false;
@@ -36,7 +36,7 @@ public class NotificationService extends Service {
 	public String mMqttClientId = null;
 	final public String mMqttConnectionString = "tcp://tools.johnson.uicp.net:1883";
 	final public boolean mMqttCleanStart = true;
-	final public short mMqttKeepalive = 300;
+	final public short mMqttKeepalive = 3600;
 
 	private Timer mTimer = null;
 	private TimerTask mTimerTask;
@@ -243,7 +243,7 @@ public class NotificationService extends Service {
 
 		Utils.PrintLog("start timer");
 		long delay = 5000;
-		long period = 30000;
+		long period = 60000;
 		mTimer.schedule(new MyTimerTask(), delay, period);
 	}
 }
