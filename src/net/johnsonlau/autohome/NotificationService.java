@@ -92,8 +92,11 @@ public class NotificationService extends Service {
 		stopTimer();
 		if(mMqttConnected) {
 			try {
+				Utils.PrintLog("disconncting mqtt");
 				mMqttClient.disconnect();			
+				Utils.PrintLog("disconncted mqtt");
 			} catch (MqttPersistenceException ex) {
+				Utils.PrintLog("disconnct mqtt EXCEPTION");
 			}
 		}
 	}
