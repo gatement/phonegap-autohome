@@ -196,7 +196,7 @@ public class NotificationService extends Service {
 	}
 
 	private void showNotification(String msg) {
-		showNotification(msg, "message");
+		showNotification(msg, "AutoHome");
 	}
 
 	private void showNotification(String msg, String title) {
