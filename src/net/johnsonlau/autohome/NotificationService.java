@@ -1,6 +1,8 @@
 package net.johnsonlau.autohome;
 
 import java.lang.Thread;
+import java.lang.String;
+import java.nio.charset.Charset;
 import java.lang.InterruptedException;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -27,9 +29,7 @@ public class NotificationService extends Service {
 	private MessageThread mMessageThread = null;
 
 	private NotificationManager mNotificationManager = null;
-	private Notification mNotification = null;
-	private int mNotificationIcon = R.drawable.logo;
-	private int mNotificationId = 0;
+	private int mNotificationId = 2;
 
 	public boolean mMqttConnected = false;
 	public MqttClient mMqttClient = null;
@@ -47,11 +47,7 @@ public class NotificationService extends Service {
 	
 	@Override
 	public void onCreate() {
-		// init notifacation
-		mNotification = new Notification();
-		mNotification.icon = mNotificationIcon;
-		mNotification.defaults = Notification.DEFAULT_ALL;
-		mNotification.flags = Notification.FLAG_AUTO_CANCEL;
+		// init notifacationManager
 		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
 		// init mqtt clientId
@@ -76,7 +72,7 @@ public class NotificationService extends Service {
 		if(intent != null)
 		{
 			if(intent.getAction().equals("init")){
-				//showNotification("Client id: " + mMqttClientId);
+				showNotification(mMqttClientId, true);
 			}
 			else if (intent.getAction().equals("exit")){
 				this.stopSelf();
@@ -135,7 +131,9 @@ public class NotificationService extends Service {
 			Utils.PrintLog(thisTopicName);
 			String[] items = thisTopicName.split("/");
 
-			if(items.length == 3 && (items[2].equals("online") || items[2].equals("offline"))){
+			if(items.length == 3 && 
+				(items[2].equals("online") || 
+				 items[2].equals("offline"))){
 				String deviceName = "";
 				if(items[1].equals("000000000002")){
 					deviceName = "Arduino";
@@ -152,6 +150,14 @@ public class NotificationService extends Service {
 
 				String msg = deviceName + " is " + items[2];
 				showNotification(msg);
+			}
+			else if(items.length == 3 && items[2].equals("msg")){
+				String msg = new String(thisPayload, Charset.forName("UTF-8"));
+				showNotification(msg);
+			}
+			else if(items.length == 3 && items[2].equals("persistence_msg")){
+				String msg = new String(thisPayload, Charset.forName("UTF-8"));
+				showNotification(msg, true);
 			}
 			else
 			{
@@ -196,16 +202,36 @@ public class NotificationService extends Service {
 	}
 
 	private void showNotification(String msg) {
-		showNotification(msg, "AutoHome");
+		showNotification(msg, "AutoHome", false);
 	}
 
-	private void showNotification(String msg, String title) {
+	private void showNotification(String msg, boolean noClear) {
+		showNotification(msg, "AutoHome", noClear);
+	}
+
+	private void showNotification(String msg, String title, boolean noClear) {
 		try {
 			if (msg != null && !"".equals(msg)) {
 				PendingIntent pendingIntent = buildPendingIntent(msg);
-				mNotification.tickerText = msg;
-				mNotification.setLatestEventInfo(NotificationService.this, title, msg, pendingIntent);
-				mNotificationManager.notify(mNotificationId++, mNotification);
+
+				Notification notification = new Notification();
+				notification.icon = R.drawable.logo;
+				notification.defaults = Notification.DEFAULT_ALL;
+				notification.tickerText = msg;
+				notification.setLatestEventInfo(NotificationService.this, title, msg, pendingIntent);
+				int notificationId = 0; 
+				if(noClear)
+				{
+					notification.flags = Notification.FLAG_NO_CLEAR;
+					notificationId = 1;
+				}
+				else
+				{
+					notification.flags = Notification.FLAG_AUTO_CANCEL;
+					notificationId = mNotificationId++;
+				}
+
+				mNotificationManager.notify(notificationId, notification);
 			}
 		} catch (Exception e) {
 			Utils.PrintLog(e.getMessage());
