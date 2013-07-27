@@ -72,7 +72,7 @@ public class NotificationService extends Service {
 		if(intent != null)
 		{
 			if(intent.getAction().equals("init")){
-				showNotification(mMqttClientId, true);
+				//showNotification(mMqttClientId, true);
 			}
 			else if (intent.getAction().equals("exit")){
 				this.stopSelf();
