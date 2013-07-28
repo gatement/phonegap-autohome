@@ -36,7 +36,7 @@ public class NotificationService extends Service {
 	public String mMqttClientId = null;
 	final public String mMqttConnectionString = "tcp://tools.johnson.uicp.net:1883";
 	final public boolean mMqttCleanStart = true;
-	final public short mMqttKeepalive = 300;
+	final public short mMqttKeepalive = 3600;
 
 	private Timer mTimer = null;
 	private TimerTask mTimerTask;
