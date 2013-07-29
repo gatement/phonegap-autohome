@@ -131,27 +131,7 @@ public class NotificationService extends Service {
 			Utils.PrintLog(thisTopicName);
 			String[] items = thisTopicName.split("/");
 
-			if(items.length == 3 && 
-				(items[2].equals("online") || 
-				 items[2].equals("offline"))){
-				String deviceName = "";
-				if(items[1].equals("000000000002")){
-					deviceName = "Arduino";
-				}
-				else if(items[1].equals("000000000003")){
-					deviceName = "Windows";
-				}
-				else if(items[1].equals("000000000004")){
-					deviceName = "Linux";
-				}
-				else {
-					deviceName = items[1];
-				}
-
-				String msg = deviceName + " is " + items[2];
-				showNotification(msg);
-			}
-			else if(items.length == 3 && items[2].equals("msg")){
+			if(items.length == 3 && items[2].equals("msg")){
 				String msg = new String(thisPayload, Charset.forName("UTF-8"));
 				showNotification(msg);
 			}
@@ -161,7 +141,8 @@ public class NotificationService extends Service {
 			}
 			else
 			{
-				showNotification(thisTopicName);
+				String msg = thisTopicName;
+				showNotification(msg);
 			}
 		}
 	}	
